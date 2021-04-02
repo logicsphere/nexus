@@ -1,10 +1,25 @@
 version: 2.1
 
-orbs:
-  maven: circleci/maven@1.1
+jobs:
+  maven_test:
+    docker:
+      - image: circleci/openjdk:11-jdk-stretch
+    working_directory: ~/nexus
+    steps:
+      - checkout
+      - restore_cache:
+          key: logicsphere-nexus-{{ checksum "pom.xml" }}
+
+      - run: './mvnw -Dspring.profiles.active=test test package'
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: logicsphere-nexus-{{ checksum "pom.xml" }}
+
+      - store_artifacts:
+          path: nexus-app/target/nexus-app/1.0.0-SNAPSHOT.jar
 
 workflows:
-  maven_test:
+  build:
     jobs:
-      - maven/test:
-          command: '-Dspring.profiles.active=test test'
+      - maven_test
